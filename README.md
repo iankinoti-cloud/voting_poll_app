@@ -1,4 +1,4 @@
-# VotePoll — React Voting Poll App
+# VotePoll - React Voting Poll App
 
 A single-page voting poll app built with Vite + React and Tailwind CSS.
 
