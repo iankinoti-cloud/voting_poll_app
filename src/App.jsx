@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PollForm from './components/PollForm';
 import PollList from './components/PollList';
+import AnimatedTitle from './components/AnimatedTitle';
 import './index.css';
 
 const DEFAULT_OPTIONS = [
@@ -25,6 +26,7 @@ export default function App() {
   const [hasVoted, setHasVoted] = useState(() =>
     loadFromStorage('poll_hasVoted', false)
   );
+  const [wiggleTrigger, setWiggleTrigger] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('poll_options', JSON.stringify(options));
@@ -55,6 +57,7 @@ export default function App() {
   function handleReset() {
     setOptions((prev) => prev.map((opt) => ({ ...opt, votes: 0 })));
     setHasVoted(false);
+    setWiggleTrigger((n) => n + 1);
   }
 
   const totalVotes = options.reduce((sum, opt) => sum + opt.votes, 0);
@@ -65,16 +68,29 @@ export default function App() {
       <header className="bg-[#1a1815] border-b border-[#3d3830] shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-widest uppercase text-[#f2ede4]">
-              VotePoll
-            </h1>
+            <AnimatedTitle wiggleTrigger={wiggleTrigger} />
             <p className="text-[#c8b89a] text-sm mt-1 tracking-wide">
               Cast your vote | every voice counts
             </p>
           </div>
           <button
             onClick={handleReset}
-            className="border border-[#c8b89a] text-[#c8b89a] hover:bg-[#c8b89a] hover:text-[#0c0b0a] font-semibold px-4 py-2 rounded-lg transition-colors duration-200 text-sm tracking-wide"
+            className="
+              relative
+              bg-white/10
+              backdrop-blur-md
+              border border-[#c8b89a]/40
+              text-[#f2ede4]
+              font-semibold px-4 py-2 rounded-xl
+              text-sm tracking-wide
+              shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_16px_rgba(200,184,154,0.15)]
+              hover:bg-white/20
+              hover:border-[#c8b89a]/70
+              hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_24px_rgba(200,184,154,0.3)]
+              hover:text-white
+              active:scale-95
+              transition-all duration-200
+            "
           >
             Reset Votes
           </button>
@@ -83,7 +99,7 @@ export default function App() {
 
       {/* Main */}
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        <PollForm onAddOption={handleAddOption} />
+        <PollForm onAddOption={handleAddOption} hasVoted={hasVoted} />
         <PollList
           options={options}
           totalVotes={totalVotes}

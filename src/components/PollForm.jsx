@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-export default function PollForm({ onAddOption }) {
+export default function PollForm({ onAddOption, hasVoted }) {
   const [inputValue, setInputValue] = useState('');
   const [shake, setShake] = useState(0);
 
@@ -25,6 +25,11 @@ export default function PollForm({ onAddOption }) {
       <h2 className="text-xs font-semibold text-[#c8b89a] mb-4 tracking-widest uppercase">
         Add a Poll Option
       </h2>
+      {hasVoted && (
+        <p className="text-[#6b6055] text-xs mb-3 tracking-wide">
+          Options are locked after voting. Reset to make changes.
+        </p>
+      )}
 
       <motion.form
         onSubmit={handleSubmit}
@@ -39,14 +44,16 @@ export default function PollForm({ onAddOption }) {
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Type an option..."
           maxLength={60}
-          whileFocus={{ scale: 1.01 }}
-          className="flex-1 bg-[#242220] border border-[#3d3830] text-[#f2ede4] placeholder-[#6b6055] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#c8b89a] transition"
+          disabled={hasVoted}
+          whileFocus={!hasVoted ? { scale: 1.01 } : {}}
+          className="flex-1 bg-[#242220] border border-[#3d3830] text-[#f2ede4] placeholder-[#6b6055] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#c8b89a] transition disabled:opacity-40 disabled:cursor-not-allowed"
         />
         <motion.button
           type="submit"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-[#c8b89a] text-[#0c0b0a] font-semibold px-6 py-2 rounded-lg tracking-wide text-sm transition-colors duration-150 hover:bg-[#d4c4a6]"
+          disabled={hasVoted}
+          whileHover={!hasVoted ? { scale: 1.04 } : {}}
+          whileTap={!hasVoted ? { scale: 0.95 } : {}}
+          className="bg-[#c8b89a] text-[#0c0b0a] font-semibold px-6 py-2 rounded-lg tracking-wide text-sm transition-colors duration-150 hover:bg-[#d4c4a6] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Add Option
         </motion.button>
