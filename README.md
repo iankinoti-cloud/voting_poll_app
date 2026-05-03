@@ -23,7 +23,7 @@ A single-page voting poll app built with Vite + React and Tailwind CSS.
 
 ```
 src/
-├── App.jsx                # Root component — all state lives here
+├── App.jsx                # Root component - all state lives here
 ├── main.jsx               # Entry point
 ├── index.css              # Tailwind import
 └── components/
