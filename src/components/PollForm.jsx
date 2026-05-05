@@ -1,63 +1,147 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { createPoll } from '../firebase/firestore';
 
-export default function PollForm({ onAddOption, hasVoted }) {
-  const [inputValue, setInputValue] = useState('');
+const generateId = () => Math.random().toString(36).slice(2, 10);
+
+export default function PollForm({ onCreated }) {
+  const { currentUser } = useAuth();
+  const [title, setTitle] = useState('');
+  const [optionInput, setOptionInput] = useState('');
+  const [options, setOptions] = useState([]);
   const [shake, setShake] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  function handleSubmit(e) {
+  function handleAddOption(e) {
     e.preventDefault();
-    if (!inputValue.trim()) {
+    if (!optionInput.trim()) {
       setShake((s) => s + 1);
       return;
     }
-    onAddOption(inputValue);
-    setInputValue('');
+    setOptions((prev) => [...prev, { id: generateId(), text: optionInput.trim() }]);
+    setOptionInput('');
+  }
+
+  function handleRemoveOption(id) {
+    setOptions((prev) => prev.filter((o) => o.id !== id));
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    if (!title.trim()) return setError('Please enter a poll title.');
+    if (options.length < 2) return setError('Add at least 2 options.');
+    setError('');
+    setLoading(true);
+    try {
+      await createPoll(title.trim(), options, currentUser);
+      onCreated?.();
+    } catch (err) {
+      setError('Failed to create poll. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="bg-[#1a1815] rounded-xl p-6 shadow-lg border border-[#3d3830]"
+      className="rounded-2xl p-6 shadow-lg"
+      style={{ background: '#1a1815', border: '1px solid #3d3830' }}
     >
-      <h2 className="text-xs font-semibold text-[#c8b89a] mb-4 tracking-widest uppercase">
-        Add a Poll Option
+      <h2 className="text-xs font-semibold mb-5 tracking-widest uppercase" style={{ color: '#c8b89a' }}>
+        Create New Poll
       </h2>
-      {hasVoted && (
-        <p className="text-[#6b6055] text-xs mb-3 tracking-wide">
-          Options are locked after voting. Reset to make changes.
-        </p>
+
+      {error && (
+        <p className="text-xs mb-3" style={{ color: '#f28b82' }}>{error}</p>
       )}
 
+      {/* Poll title */}
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Poll question or title"
+        maxLength={120}
+        className="w-full px-4 py-3 rounded-xl text-sm outline-none mb-4"
+        style={{ background: '#242220', color: '#f2ede4', border: '1px solid #3d3830' }}
+      />
+
+      {/* Option input */}
       <motion.form
-        onSubmit={handleSubmit}
-        className="flex flex-col sm:flex-row gap-3"
+        onSubmit={handleAddOption}
+        className="flex gap-2 mb-3"
         key={shake}
-        animate={shake ? { x: [0, -10, 10, -8, 8, -4, 4, 0] } : {}}
-        transition={{ duration: 0.4 }}
+        animate={shake ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : {}}
+        transition={{ duration: 0.35 }}
       >
-        <motion.input
+        <input
           type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type an option..."
-          maxLength={60}
-          disabled={hasVoted}
-          whileFocus={!hasVoted ? { scale: 1.01 } : {}}
-          className="flex-1 bg-[#242220] border border-[#3d3830] text-[#f2ede4] placeholder-[#6b6055] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#c8b89a] transition disabled:opacity-40 disabled:cursor-not-allowed"
+          value={optionInput}
+          onChange={(e) => setOptionInput(e.target.value)}
+          placeholder="Add an option…"
+          maxLength={80}
+          className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
+          style={{ background: '#242220', color: '#f2ede4', border: '1px solid #3d3830' }}
         />
         <motion.button
           type="submit"
-          disabled={hasVoted}
-          whileHover={!hasVoted ? { scale: 1.04 } : {}}
-          whileTap={!hasVoted ? { scale: 0.95 } : {}}
-          className="bg-[#c8b89a] text-[#0c0b0a] font-semibold px-6 py-2 rounded-lg tracking-wide text-sm transition-colors duration-150 hover:bg-[#d4c4a6] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-semibold"
+          style={{ background: '#3d3830', color: '#c8b89a' }}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
         >
-          Add Option
+          Add
         </motion.button>
       </motion.form>
+
+      {/* Options list */}
+      <AnimatePresence>
+        {options.map((opt, i) => (
+          <motion.div
+            key={opt.id}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2"
+            style={{ background: '#242220', border: '1px solid #3d3830' }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+          >
+            <span className="text-xs w-5 text-center font-bold" style={{ color: '#6a5a4a' }}>{i + 1}</span>
+            <span className="flex-1 text-sm" style={{ color: '#f2ede4' }}>{opt.text}</span>
+            <motion.button
+              onClick={() => handleRemoveOption(opt.id)}
+              className="w-5 h-5 flex items-center justify-center rounded-full text-xs"
+              style={{ background: '#3d3830', color: '#8a7a6a' }}
+              whileHover={{ scale: 1.2, color: '#f28b82' }}
+            >
+              ×
+            </motion.button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
+      {options.length < 2 && (
+        <p className="text-xs mt-1 mb-3" style={{ color: '#6a5a4a' }}>
+          Add at least 2 options to create the poll.
+        </p>
+      )}
+
+      {/* Create button */}
+      <motion.button
+        onClick={handleCreate}
+        disabled={loading || options.length < 2 || !title.trim()}
+        className="w-full mt-3 py-3 rounded-xl font-semibold text-sm tracking-wide"
+        style={{
+          background: '#c8b89a',
+          color: '#0c0b0a',
+          opacity: loading || options.length < 2 || !title.trim() ? 0.45 : 1,
+        }}
+        whileHover={{ scale: (loading || options.length < 2 || !title.trim()) ? 1 : 1.02 }}
+        whileTap={{ scale: (loading || options.length < 2 || !title.trim()) ? 1 : 0.98 }}
+      >
+        {loading ? 'Creating…' : 'Create Poll'}
+      </motion.button>
     </motion.div>
   );
 }
