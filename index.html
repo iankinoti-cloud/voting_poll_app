@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/voting_poll_app/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>voting_poll_app</title>
+    <script>
+      // Restore path after GitHub Pages 404 redirect
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+        var p = new URLSearchParams(location.search).get('p');
+        if (p) {
+          var base = location.pathname.split('/').slice(0, 2).join('/');
+          history.replaceState(null, null, base + p);
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/voting_poll_app/assets/index-FpObr-cu.js"></script>
     <link rel="stylesheet" crossorigin href="/voting_poll_app/assets/index-B2zQdl_1.css">
   </head>
