@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/voting_poll_app/',
+  base: process.env.VERCEL ? '/' : '/voting_poll_app/',
   plugins: [react(), tailwindcss()],
 })
